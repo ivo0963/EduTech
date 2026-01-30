@@ -6,8 +6,6 @@ import com.EduTech.cursos.service.CursoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,45 +38,18 @@ public class CursoControllerV2 {
 
     @GetMapping("/{id}")
     public ResponseEntity<EntityModel<Curso>> obtenerCurso(@PathVariable Long id) {
-        Curso curso = cursoService.obtenerPorId(id);
-
-        if (curso == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(cursoAssembler.toModel(curso));
+        return cursoService.obtenerPorId(id)
+                .map(cursoAssembler::toModel)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public ResponseEntity<?> crearCurso(@RequestBody Map<String, Object> payload) {
-        Object idObj = payload.get("instructorId");
-
-        if (idObj == null) {
-            return ResponseEntity.badRequest().body("Error: El campo 'instructorId' es obligatorio.");
-        }
-
-        Long idInstructor = Long.valueOf(idObj.toString());
-        String titulo = (payload.get("titulo") != null) ? payload.get("titulo").toString() : "";
-        String descripcion = (payload.get("descripcion") != null) ? payload.get("descripcion").toString() : "";
-
-        Curso nuevoCurso = new Curso();
-        nuevoCurso.setTitulo(titulo);
-        nuevoCurso.setDescripcion(descripcion);
-        nuevoCurso.setInstructorId(idInstructor);
-
-        Curso cursoCreado = cursoService.guardarCurso(nuevoCurso);
-
-        EntityModel<Curso> recurso = EntityModel.of(cursoCreado);
-        recurso.add(WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(CursoControllerV2.class)
-                .obtenerCurso(cursoCreado.getId())).withSelfRel());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(recurso);
-    }
-
-    @PutMapping("/{id}/aprobar")
-    public ResponseEntity<EntityModel<Curso>> aprobarCurso(@PathVariable Long id) {
-        Curso cursoAprobado = cursoService.aprobarCurso(id);
-        return ResponseEntity.ok(cursoAssembler.toModel(cursoAprobado));
+    public ResponseEntity<EntityModel<Curso>> crearCurso(@RequestBody Curso curso) {
+        Curso nuevoCurso = cursoService.guardarCurso(curso);
+        return ResponseEntity
+                .created(linkTo(methodOn(CursoControllerV2.class).obtenerCurso(nuevoCurso.getId())).toUri())
+                .body(cursoAssembler.toModel(nuevoCurso));
     }
 
     @PutMapping("/{id}/asignar")
@@ -96,6 +67,12 @@ public class CursoControllerV2 {
         return ResponseEntity.ok(cursoAssembler.toModel(cursoActualizado));
     }
 
+    @PutMapping("/{id}/aprobar")
+    public ResponseEntity<EntityModel<Curso>> aprobarCurso(@PathVariable Long id) {
+        Curso cursoAprobado = cursoService.aprobarCurso(id);
+        return ResponseEntity.ok(cursoAssembler.toModel(cursoAprobado));
+    }
+
     @GetMapping("/instructor/{idInstructor}")
     public CollectionModel<EntityModel<Curso>> listarPorInstructor(@PathVariable Long idInstructor) {
         List<EntityModel<Curso>> cursos = cursoService.listarCursosPorInstructor(idInstructor).stream()
@@ -108,7 +85,7 @@ public class CursoControllerV2 {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarCurso(@PathVariable Long id) {
-        if (cursoService.obtenerPorId(id) == null) {
+        if (cursoService.obtenerPorId(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 

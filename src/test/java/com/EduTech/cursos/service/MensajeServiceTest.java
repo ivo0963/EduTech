@@ -1,15 +1,14 @@
 package com.EduTech.cursos.service;
 
+import com.EduTech.cursos.client.UsuarioClient;
+import com.EduTech.cursos.dto.UsuarioDTO;
 import com.EduTech.cursos.model.Mensaje;
-import com.EduTech.cursos.model.Usuario;
 import com.EduTech.cursos.repository.MensajeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,28 +23,32 @@ class MensajeServiceTest {
     private MensajeRepository mensajeRepository;
 
     @Mock
-    private UsuarioRepository usuarioRepository;
+    private UsuarioClient usuarioClient;
 
     @InjectMocks
     private MensajeService mensajeService;
 
     @Test
     void enviarMensaje() {
-        Usuario remitente = new Usuario();
-        remitente.setId(1L);
-        Usuario destinatario = new Usuario();
-        destinatario.setId(2L);
-        Mensaje mensaje = new Mensaje();
-        mensaje.setContenido("Hola");
+        Long remitenteId = 1L;
+        Long destinatarioId = 2L;
+        String contenido = "Hola compañero";
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(remitente));
-        when(usuarioRepository.findById(2L)).thenReturn(Optional.of(destinatario));
-        when(mensajeRepository.save(any(Mensaje.class))).thenReturn(mensaje);
+        Mensaje mensajeGuardado = new Mensaje();
+        mensajeGuardado.setContenido(contenido);
+        mensajeGuardado.setRemitenteId(remitenteId);
 
-        Mensaje resultado = mensajeService.enviarMensaje(1L, 2L, "Hola");
+        when(usuarioClient.obtenerUsuario(remitenteId)).thenReturn(new UsuarioDTO());
+        when(usuarioClient.obtenerUsuario(destinatarioId)).thenReturn(new UsuarioDTO());
+
+        when(mensajeRepository.save(any(Mensaje.class))).thenReturn(mensajeGuardado);
+
+        Mensaje resultado = mensajeService.enviarMensaje(contenido, remitenteId, destinatarioId);
 
         assertNotNull(resultado);
-        assertEquals("Hola", resultado.getContenido());
-        verify(mensajeRepository).save(any(Mensaje.class));
+        assertEquals(contenido, resultado.getContenido());
+
+        verify(usuarioClient).obtenerUsuario(remitenteId);
+        verify(usuarioClient).obtenerUsuario(destinatarioId);
     }
 }

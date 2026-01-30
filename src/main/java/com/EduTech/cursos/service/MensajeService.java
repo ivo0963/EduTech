@@ -29,6 +29,7 @@ public class MensajeService {
         return mensajeRepository.save(mensaje);
     }
 
+
     public List<Mensaje> obtenerChat(Long usuario1Id, Long usuario2Id) {
         return mensajeRepository.findAll();
     }

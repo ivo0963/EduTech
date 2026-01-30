@@ -1,8 +1,9 @@
 package com.EduTech.cursos.service;
 
+import com.EduTech.cursos.client.UsuarioClient;
+import com.EduTech.cursos.dto.UsuarioDTO;
 import com.EduTech.cursos.model.Curso;
 import com.EduTech.cursos.model.Inscripcion;
-import com.EduTech.cursos.model.Usuario;
 import com.EduTech.cursos.repository.CursoRepository;
 import com.EduTech.cursos.repository.InscripcionRepository;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class InscripcionServiceTest {
     private InscripcionRepository inscripcionRepository;
 
     @Mock
-    private UsuarioRepository usuarioRepository;
+    private UsuarioClient usuarioClient;
 
     @Mock
     private CursoRepository cursoRepository;
@@ -35,19 +36,25 @@ class InscripcionServiceTest {
 
     @Test
     void inscribir() {
-        Usuario usuario = new Usuario();
-        usuario.setId(1L);
+        Long usuarioId = 1L;
+        Long cursoId = 10L;
+
         Curso curso = new Curso();
-        curso.setId(1L);
-        Inscripcion inscripcion = new Inscripcion();
+        curso.setId(cursoId);
 
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(cursoRepository.findById(1L)).thenReturn(Optional.of(curso));
-        when(inscripcionRepository.save(any(Inscripcion.class))).thenReturn(inscripcion);
+        Inscripcion inscripcionEsperada = new Inscripcion();
+        inscripcionEsperada.setEstudianteId(usuarioId);
 
-        Inscripcion resultado = inscripcionService.inscribir(1L, 1L);
+        when(usuarioClient.obtenerUsuario(usuarioId)).thenReturn(new UsuarioDTO());
+
+        when(cursoRepository.findById(cursoId)).thenReturn(Optional.of(curso));
+
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenReturn(inscripcionEsperada);
+
+        Inscripcion resultado = inscripcionService.inscribirUsuario(usuarioId, cursoId);
 
         assertNotNull(resultado);
+        verify(usuarioClient).obtenerUsuario(usuarioId);
         verify(inscripcionRepository).save(any(Inscripcion.class));
     }
 }

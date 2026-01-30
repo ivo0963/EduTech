@@ -12,8 +12,9 @@ import java.util.List;
 public interface MensajeRepository extends JpaRepository<Mensaje, Long> {
 
     @Query("SELECT m FROM Mensaje m WHERE " +
-            "(m.remitente.id = :usuario1 AND m.destinatario.id = :usuario2) OR " +
-            "(m.remitente.id = :usuario2 AND m.destinatario.id = :usuario1) " +
+            "(m.remitenteId = :usuario1Id AND m.destinatarioId = :usuario2Id) OR " +
+            "(m.remitenteId = :usuario2Id AND m.destinatarioId = :usuario1Id) " +
             "ORDER BY m.fechaEnvio ASC")
-    List<Mensaje> obtenerConversacion(@Param("usuario1") Long usuario1, @Param("usuario2") Long usuario2);
+    List<Mensaje> obtenerConversacion(@Param("usuario1Id") Long usuario1Id,
+                                      @Param("usuario2Id") Long usuario2Id);
 }
